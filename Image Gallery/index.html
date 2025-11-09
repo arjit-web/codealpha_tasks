@@ -1,0 +1,280 @@
+ <!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Responsive Image Gallery with Lightbox & Filters</title>
+  <style>
+    :root{
+      --gap:16px;
+      --radius:12px;
+      --max-width:1200px;
+      --card-bg: #ffffff;
+      --accent: #0066ff;
+      --muted: #666;
+    }
+    *{box-sizing:border-box}
+    body{font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; background:#f5f7fb; color:#111}
+    .wrap{max-width:var(--max-width); margin:28px auto; padding:24px}
+    h1{font-size:1.6rem; margin:0 0 12px}
+    p.lead{color:var(--muted); margin:0 0 20px}
+
+    /* filter bar */
+    .filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px}
+    .filters button{background:transparent; border:1px solid #ddd; padding:8px 12px; border-radius:999px; cursor:pointer; transition:all .2s;}
+    .filters button.active{background:var(--accent); color:#fff; border-color:var(--accent); transform:translateY(-2px)}
+
+    /* gallery grid */
+    .grid{display:grid; gap:var(--gap); grid-template-columns: repeat(4, 1fr)}
+    .item{position:relative; overflow:hidden; border-radius:var(--radius); background:var(--card-bg); box-shadow:0 6px 20px rgba(16,24,40,0.06); cursor:pointer}
+    .item img{width:100%; height:100%; object-fit:cover; display:block; transition:transform .45s cubic-bezier(.2,.9,.2,1), filter .25s}
+    .item:hover img{transform:scale(1.06); filter:brightness(.95)}
+    .caption{position:absolute; left:12px; right:12px; bottom:12px; color:#fff; font-weight:600; text-shadow:0 4px 18px rgba(0,0,0,0.45); display:flex; justify-content:space-between; align-items:center}
+    .badge{background:rgba(0,0,0,0.45); padding:6px 10px; border-radius:8px; font-size:.85rem}
+
+    /* responsive */
+    @media (max-width:1000px){ .grid{grid-template-columns: repeat(3,1fr)} }
+    @media (max-width:700px){ .grid{grid-template-columns: repeat(2,1fr)} }
+    @media (max-width:420px){ .grid{grid-template-columns: 1fr} }
+
+    /* lightbox */
+    .lightbox{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(2,6,23,0.7); z-index:1000}
+    .lightbox.show{display:flex}
+    .lightbox-dialog{position:relative; max-width:95%; max-height:95%; width:100%;}
+    .lightbox img{width:100%; height:auto; border-radius:10px; display:block; box-shadow:0 20px 60px rgba(2,6,23,0.6)}
+    .controls{position:absolute; top:50%; transform:translateY(-50%); left:8px; right:8px; display:flex; justify-content:space-between; pointer-events:none}
+    .controls button{pointer-events:auto; background:rgba(255,255,255,0.08); border:none; color:#fff; padding:12px 14px; border-radius:10px; backdrop-filter:blur(4px); cursor:pointer}
+    .close-btn{position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.06); border:none; color:#fff; padding:8px 10px; border-radius:8px; cursor:pointer}
+
+    /* prev/next at bottom for smaller screens */
+    .meta{display:flex; justify-content:space-between; align-items:center; margin-top:8px; color:#fff}
+    .meta .title{font-weight:700}
+
+    /* category chips inside items (small) */
+    .chip{position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.45); color:#fff; padding:6px 8px; border-radius:999px; font-size:.75rem}
+
+    /* subtle transition for show/hide */
+    .fade-in{animation:fadeIn .28s ease both}
+    @keyframes fadeIn{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Responsive Image Gallery</h1>
+    <p class="lead">Click any image to open the lightbox. Use the filters to narrow images by category. </p>
+
+    <div class="filters" aria-label="Filter images">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="nature">Nature</button>
+      <button class="filter-btn" data-filter="city">City</button>
+      <button class="filter-btn" data-filter="people">People</button>
+      <button class="filter-btn" data-filter="animals">Animals</button>
+    </div>
+
+    <div class="grid" id="gallery">
+      <!-- items: each has data-category attribute -->
+
+      <div class="item" data-category="nature" tabindex="0" data-title="Misty Mountains">
+        <span class="chip">Nature</span>
+        <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=1" alt="Misty Mountains">
+        <div class="caption"><span>Misty Mountains</span><span class="badge">4.8k</span></div>
+      </div>
+
+      <div class="item" data-category="city" tabindex="0" data-title="City Lights">
+        <span class="chip">City</span>
+        <img src="https://images.unsplash.com/photo-1467269204594-9661b134dd2b?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=2" alt="City Lights">
+        <div class="caption"><span>City Lights</span><span class="badge">3.1k</span></div>
+      </div>
+
+      <div class="item" data-category="people" tabindex="0" data-title="Smiling Portrait">
+        <span class="chip">People</span>
+        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=3" alt="Smiling Portrait">
+        <div class="caption"><span>Smiling Portrait</span><span class="badge">2.2k</span></div>
+      </div>
+
+      <div class="item" data-category="animals" tabindex="0" data-title="Playful Puppy">
+        <span class="chip">Animals</span>
+        <img src="https://images.unsplash.com/photo-1517423440428-a5a00ad493e8?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=4" alt="Playful Puppy">
+        <div class="caption"><span>Playful Puppy</span><span class="badge">5.6k</span></div>
+      </div>
+
+      <div class="item" data-category="nature" tabindex="0" data-title="Forest Path">
+        <span class="chip">Nature</span>
+        <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=5" alt="Forest Path">
+        <div class="caption"><span>Forest Path</span><span class="badge">1.9k</span></div>
+      </div>
+
+      <div class="item" data-category="city" tabindex="0" data-title="Historic Street">
+        <span class="chip">City</span>
+        <img src="https://images.unsplash.com/photo-1508057198894-247b23fe5ade?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=6" alt="Historic Street">
+        <div class="caption"><span>Historic Street</span><span class="badge">2.6k</span></div>
+      </div>
+
+      <div class="item" data-category="people" tabindex="0" data-title="Traveler">
+        <span class="chip">People</span>
+        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=7" alt="Traveler">
+        <div class="caption"><span>Traveler</span><span class="badge">3.6k</span></div>
+      </div>
+
+      <div class="item" data-category="animals" tabindex="0" data-title="Horses Running">
+        <span class="chip">Animals</span>
+        <img src="https://images.unsplash.com/photo-1504198453319-5ce911bafcde?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=8" alt="Horses Running">
+        <div class="caption"><span>Horses Running</span><span class="badge">4.0k</span></div>
+      </div>
+
+      <div class="item" data-category="nature" tabindex="0" data-title="Desert Dunes">
+        <span class="chip">Nature</span>
+        <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=9" alt="Desert Dunes">
+        <div class="caption"><span>Desert Dunes</span><span class="badge">1.4k</span></div>
+      </div>
+
+      <div class="item" data-category="city" tabindex="0" data-title="Skyscraper">
+        <span class="chip">City</span>
+        <img src="https://images.unsplash.com/photo-1483729558449-99ef09a8c325?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=10" alt="Skyscraper">
+        <div class="caption"><span>Skyscraper</span><span class="badge">2.0k</span></div>
+      </div>
+
+      <div class="item" data-category="people" tabindex="0" data-title="Market Scene">
+        <span class="chip">People</span>
+        <img src="https://images.unsplash.com/photo-1506784365847-bbad939e9335?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=11" alt="Market Scene">
+        <div class="caption"><span>Market Scene</span><span class="badge">2.9k</span></div>
+      </div>
+
+      <div class="item" data-category="animals" tabindex="0" data-title="Bird on Branch">
+        <span class="chip">Animals</span>
+        <img src="https://images.unsplash.com/photo-1465101162946-4377e57745c3?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=12" alt="Bird on Branch">
+        <div class="caption"><span>Bird on Branch</span><span class="badge">1.2k</span></div>
+      </div>
+
+    </div> <!-- end grid -->
+  </div> <!-- end wrap -->
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <div class="lightbox-dialog fade-in" role="dialog" aria-modal="true">
+      <button class="close-btn" id="lb-close" aria-label="Close lightbox">✕</button>
+      <img src="" alt="" id="lb-image">
+      <div class="meta"><div class="title" id="lb-title"></div><div class="counter" id="lb-counter"></div></div>
+      <div class="controls">
+        <button id="prev" aria-label="Previous">◀</button>
+        <button id="next" aria-label="Next">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // basic DOM refs
+    const gallery = document.getElementById('gallery');
+    const items = Array.from(gallery.querySelectorAll('.item'));
+    const filterBtns = Array.from(document.querySelectorAll('.filter-btn'));
+
+    // lightbox refs
+    const lb = document.getElementById('lightbox');
+    const lbImage = document.getElementById('lb-image');
+    const lbTitle = document.getElementById('lb-title');
+    const lbCounter = document.getElementById('lb-counter');
+    const lbClose = document.getElementById('lb-close');
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+
+    let visibleItems = items; // currently visible for navigation
+    let currentIndex = 0;
+
+    function openLightbox(index){
+      currentIndex = index;
+      const item = visibleItems[currentIndex];
+      const img = item.querySelector('img');
+      lbImage.src = img.src;
+      lbImage.alt = img.alt || '';
+      lbTitle.textContent = item.dataset.title || '';
+      lbCounter.textContent = (currentIndex+1) + ' / ' + visibleItems.length;
+      lb.classList.add('show');
+      lb.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox(){
+      lb.classList.remove('show');
+      lb.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+
+    function showNext(){
+      currentIndex = (currentIndex + 1) % visibleItems.length;
+      openLightbox(currentIndex);
+    }
+    function showPrev(){
+      currentIndex = (currentIndex - 1 + visibleItems.length) % visibleItems.length;
+      openLightbox(currentIndex);
+    }
+
+    // wire up clicks on items
+    items.forEach((it, i) => {
+      it.addEventListener('click', () => {
+        // recompute visibleItems when opening
+        visibleItems = Array.from(gallery.querySelectorAll('.item')).filter(el => el.style.display !== 'none');
+        const idx = visibleItems.indexOf(it);
+        openLightbox(idx >= 0 ? idx : 0);
+      });
+      // keyboard accessibility (enter key)
+      it.addEventListener('keydown', (e) => { if(e.key === 'Enter') it.click(); });
+    });
+
+    // lightbox controls
+    nextBtn.addEventListener('click', (e) => { e.stopPropagation(); showNext(); });
+    prevBtn.addEventListener('click', (e) => { e.stopPropagation(); showPrev(); });
+    lbClose.addEventListener('click', closeLightbox);
+    lb.addEventListener('click', (e) => { if(e.target === lb) closeLightbox(); });
+
+    // keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if(lb.classList.contains('show')){
+        if(e.key === 'ArrowRight') showNext();
+        if(e.key === 'ArrowLeft') showPrev();
+        if(e.key === 'Escape') closeLightbox();
+      }
+    });
+
+    // Filters
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.dataset.filter;
+        applyFilter(filter);
+      });
+    });
+
+    function applyFilter(filter){
+      const allItems = Array.from(gallery.querySelectorAll('.item'));
+      if(filter === 'all'){
+        allItems.forEach(it => { it.style.display = ''; it.classList.add('fade-in'); });
+      } else {
+        allItems.forEach(it => {
+          if(it.dataset.category === filter) { it.style.display = ''; it.classList.add('fade-in') }
+          else it.style.display = 'none';
+        });
+      }
+      // update visibleItems for navigation
+      visibleItems = allItems.filter(el => el.style.display !== 'none');
+      // update counter if lightbox open
+      if(lb.classList.contains('show')){
+        lbCounter.textContent = (currentIndex+1) + ' / ' + visibleItems.length;
+      }
+    }
+
+    // small touch: swipe support for lightbox
+    (function swipeSupport(){
+      let startX = 0; let dist = 0;
+      const threshold = 50;
+      lbImage.addEventListener('touchstart', (e)=>{ startX = e.changedTouches[0].clientX; });
+      lbImage.addEventListener('touchend', (e)=>{ dist = e.changedTouches[0].clientX - startX; if(dist > threshold) showPrev(); else if(dist < -threshold) showNext(); });
+    })();
+
+    // initial visible items set
+    visibleItems = items.slice();
+
+  </script>
+</body>
+</html>

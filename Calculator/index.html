@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .calculator {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 320px;
+        }
+
+        #display {
+            width: 100%;
+            height: 60px;
+            font-size: 24px;
+            text-align: right;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: #f8f8f8;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            background: #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #e0e0e0;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .zero {
+            grid-column: span 2;
+        }
+
+        .equal {
+            grid-row: span 2;
+            background: #667eea;
+            color: white;
+        }
+
+        .equal:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <input type="text" id="display" readonly>
+        <div class="buttons">
+            <button onclick="clearDisplay()">AC</button>
+            <button onclick="deleteLast()">DEL</button>
+            <button onclick="appendToDisplay('/')">/</button>
+            <button onclick="appendToDisplay('*')">×</button>
+            
+            <button onclick="appendToDisplay('7')">7</button>
+            <button onclick="appendToDisplay('8')">8</button>
+            <button onclick="appendToDisplay('9')">9</button>
+            <button onclick="appendToDisplay('-')">-</button>
+            
+            <button onclick="appendToDisplay('4')">4</button>
+            <button onclick="appendToDisplay('5')">5</button>
+            <button onclick="appendToDisplay('6')">6</button>
+            <button onclick="appendToDisplay('+')">+</button>
+            
+            <button onclick="appendToDisplay('1')">1</button>
+            <button onclick="appendToDisplay('2')">2</button>
+            <button onclick="appendToDisplay('3')">3</button>
+            <button onclick="calculate()" class="equal">=</button>
+            
+            <button onclick="appendToDisplay('0')" class="zero">0</button>
+            <button onclick="appendToDisplay('.')">.</button>
+        </div>
+    </div>
+
+    <script>
+        let display = document.getElementById('display');
+
+        // Append value to display
+        function appendToDisplay(value) {
+            display.value += value;
+        }
+
+        // Clear the entire display
+        function clearDisplay() {
+            display.value = '';
+        }
+
+        // Delete last character
+        function deleteLast() {
+            display.value = display.value.slice(0, -1);
+        }
+
+        // Calculate the result
+        function calculate() {
+            try {
+                // Replace × with * for calculation
+                let expression = display.value.replace(/×/g, '*');
+                display.value = eval(expression);
+            } catch (error) {
+                display.value = 'Error';
+                setTimeout(clearDisplay, 1500);
+            }
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(event) {
+            // Numbers 0-9
+            if (event.key >= '0' && event.key <= '9') {
+                appendToDisplay(event.key);
+            }
+            // Operators
+            else if (event.key === '+') {
+                appendToDisplay('+');
+            }
+            else if (event.key === '-') {
+                appendToDisplay('-');
+            }
+            else if (event.key === '*') {
+                appendToDisplay('*');
+            }
+            else if (event.key === '/') {
+                appendToDisplay('/');
+            }
+            // Decimal point
+            else if (event.key === '.') {
+                appendToDisplay('.');
+            }
+            // Enter or = to calculate
+            else if (event.key === 'Enter' || event.key === '=') {
+                event.preventDefault();
+                calculate();
+            }
+            // Backspace to delete
+            else if (event.key === 'Backspace') {
+                event.preventDefault();
+                deleteLast();
+            }
+            // Escape to clear
+            else if (event.key === 'Escape') {
+                clearDisplay();
+            }
+        });
+    </script>
+</body>
+</html>
